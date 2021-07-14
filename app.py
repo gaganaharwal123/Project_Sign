@@ -35,9 +35,10 @@ def gen_frames():
 
     prediction1 = 26
     prediction2 = 26
+    cam = "http://192.168.11.146:81/videostream.cgi?rate=0&user=admin&pwd=888888"
 
     index = 0
-    camera = cv2.VideoCapture(-1)
+    camera = cv2.VideoCapture(cam)
     
     while True:
         (grabbed, frame) = camera.read()
