@@ -2,6 +2,7 @@ opencv-python-headless
 tensorflow-cpu
 streamlit
 uvicorn
+gunicorn
 numpy
 flask
 streamlit-webrtc
