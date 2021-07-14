@@ -1,7 +1,7 @@
 
 from flask import Flask, render_template, Response
 import cv2
-
+from base_camera import BaseCamera
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 from collections import deque
@@ -14,97 +14,105 @@ import os
 
 app = Flask(__name__)
 
+class Camera(BaseCamera):
+    video_source = 0
 
-def gen_frames():  
-    #mlp_model = load_model('emnist_mlp_model.h5')
-    cnn_model = load_model('emnist_cnn_model.h5')
+    def __init__(self):
+        if os.environ.get('OPENCV_CAMERA_SOURCE'):
+            Camera.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
+        super(Camera, self).__init__()
 
-    letters = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j',
-    11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't',
-    21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z', 27: '-'}
+    def set_video_source(source):
+        Camera.video_source = source
+    def gen_frames():  
+        #mlp_model = load_model('emnist_mlp_model.h5')
+        cnn_model = load_model('emnist_cnn_model.h5')
 
-    blueLower = np.array([100, 60, 60])
-    blueUpper = np.array([140, 255, 255])
+        letters = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j',
+        11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't',
+        21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z', 27: '-'}
 
-    kernel = np.ones((5, 5), np.uint8)
+        blueLower = np.array([100, 60, 60])
+        blueUpper = np.array([140, 255, 255])
 
-    blackboard = np.zeros((480,640,3), dtype=np.uint8)
-    alphabet = np.zeros((200, 200, 3), dtype=np.uint8)
+        kernel = np.ones((5, 5), np.uint8)
 
-    points = deque(maxlen=512)
+        blackboard = np.zeros((480,640,3), dtype=np.uint8)
+        alphabet = np.zeros((200, 200, 3), dtype=np.uint8)
 
-    prediction1 = 26
-    prediction2 = 26
-    cam = "http://192.168.11.146:81/videostream.cgi?rate=0&user=admin&pwd=888888"
+        points = deque(maxlen=512)
 
-    index = 0
-    camera = cv2.VideoCapture(cam)
-    
-    while True:
-        (grabbed, frame) = camera.read()
-        frame = cv2.flip(frame, 1)
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        prediction1 = 26
+        prediction2 = 26
 
-        blueMask = cv2.inRange(hsv, blueLower, blueUpper)
-        blueMask = cv2.erode(blueMask, kernel, iterations=2)
-        blueMask = cv2.morphologyEx(blueMask, cv2.MORPH_OPEN, kernel)
-        blueMask = cv2.dilate(blueMask, kernel, iterations=1)
+        index = 0
+        camera = cv2.VideoCapture(Camera.video_source)
 
-        (_, cnts, _) = cv2.findContours(blueMask.copy(), cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE)
-        center = None
+        while True:
+            (grabbed, frame) = camera.read()
+            frame = cv2.flip(frame, 1)
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        if len(cnts) > 0:
-            cnt = sorted(cnts, key = cv2.contourArea, reverse = True)[0]
-            ((x, y), radius) = cv2.minEnclosingCircle(cnt)
-            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
-            M = cv2.moments(cnt)
-            center = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
+            blueMask = cv2.inRange(hsv, blueLower, blueUpper)
+            blueMask = cv2.erode(blueMask, kernel, iterations=2)
+            blueMask = cv2.morphologyEx(blueMask, cv2.MORPH_OPEN, kernel)
+            blueMask = cv2.dilate(blueMask, kernel, iterations=1)
 
-            points.appendleft(center)
+            (_, cnts, _) = cv2.findContours(blueMask.copy(), cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE)
+            center = None
 
-        elif len(cnts) == 0:
-            if len(points) != 0:
-                blackboard_gray = cv2.cvtColor(blackboard, cv2.COLOR_BGR2GRAY)
-                blur1 = cv2.medianBlur(blackboard_gray, 15)
-                blur1 = cv2.GaussianBlur(blur1, (5, 5), 0)
-                thresh1 = cv2.threshold(blur1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-                blackboard_cnts = cv2.findContours(thresh1.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[1]
-                if len(blackboard_cnts) >= 1:
-                    cnt = sorted(blackboard_cnts, key = cv2.contourArea, reverse = True)[0]
+            if len(cnts) > 0:
+                cnt = sorted(cnts, key = cv2.contourArea, reverse = True)[0]
+                ((x, y), radius) = cv2.minEnclosingCircle(cnt)
+                cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
+                M = cv2.moments(cnt)
+                center = (int(M['m10'] / M['m00']), int(M['m01'] / M['m00']))
 
-                    if cv2.contourArea(cnt) > 1000:
-                        x, y, w, h = cv2.boundingRect(cnt)
-                        alphabet = blackboard_gray[y-10:y + h + 10, x-10:x + w + 10]
-                        newImage = cv2.resize(alphabet, (28, 28))
-                        newImage = np.array(newImage)
-                        newImage = newImage.astype('float32')/255
+                points.appendleft(center)
 
-#                         prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
-#                         prediction1 = np.argmax(prediction1)
+            elif len(cnts) == 0:
+                if len(points) != 0:
+                    blackboard_gray = cv2.cvtColor(blackboard, cv2.COLOR_BGR2GRAY)
+                    blur1 = cv2.medianBlur(blackboard_gray, 15)
+                    blur1 = cv2.GaussianBlur(blur1, (5, 5), 0)
+                    thresh1 = cv2.threshold(blur1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+                    blackboard_cnts = cv2.findContours(thresh1.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[1]
+                    if len(blackboard_cnts) >= 1:
+                        cnt = sorted(blackboard_cnts, key = cv2.contourArea, reverse = True)[0]
 
-                        prediction2 = cnn_model.predict(newImage.reshape(1,28,28,1))[0]
-                        prediction2 = np.argmax(prediction2)
+                        if cv2.contourArea(cnt) > 1000:
+                            x, y, w, h = cv2.boundingRect(cnt)
+                            alphabet = blackboard_gray[y-10:y + h + 10, x-10:x + w + 10]
+                            newImage = cv2.resize(alphabet, (28, 28))
+                            newImage = np.array(newImage)
+                            newImage = newImage.astype('float32')/255
 
-                points = deque(maxlen=512)
-                blackboard = np.zeros((480, 640, 3), dtype=np.uint8)
+    #                         prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
+    #                         prediction1 = np.argmax(prediction1)
 
-        for i in range(1, len(points)):
-                if points[i - 1] is None or points[i] is None:
-                        continue
-                cv2.line(frame, points[i - 1], points[i], (0, 0, 0), 2)
-                cv2.line(blackboard, points[i - 1], points[i], (255, 255, 255), 8)
+                            prediction2 = cnn_model.predict(newImage.reshape(1,28,28,1))[0]
+                            prediction2 = np.argmax(prediction2)
 
-        cv2.putText(frame, "Convolution Neural Network predected word:  " + str(letters[int(prediction2)+1]), (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    points = deque(maxlen=512)
+                    blackboard = np.zeros((480, 640, 3), dtype=np.uint8)
 
-        cv2.imshow("alphabets Recognition Real Time", frame)
+            for i in range(1, len(points)):
+                    if points[i - 1] is None or points[i] is None:
+                            continue
+                    cv2.line(frame, points[i - 1], points[i], (0, 0, 0), 2)
+                    cv2.line(blackboard, points[i - 1], points[i], (255, 255, 255), 8)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
+            cv2.putText(frame, "Convolution Neural Network predected word:  " + str(letters[int(prediction2)+1]), (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
-    camera.release()
-    cv2.destroyAllWindows()
+            cv2.imshow("alphabets Recognition Real Time", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+        camera.release()
+        cv2.destroyAllWindows()
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
