@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 
 def gen_frames():  
-    mlp_model = load_model('emnist_mlp_model.h5')
+    #mlp_model = load_model('emnist_mlp_model.h5')
     cnn_model = load_model('emnist_cnn_model.h5')
 
     letters = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j',
@@ -80,8 +80,8 @@ def gen_frames():
                         newImage = np.array(newImage)
                         newImage = newImage.astype('float32')/255
 
-                        prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
-                        prediction1 = np.argmax(prediction1)
+#                         prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
+#                         prediction1 = np.argmax(prediction1)
 
                         prediction2 = cnn_model.predict(newImage.reshape(1,28,28,1))[0]
                         prediction2 = np.argmax(prediction2)
