@@ -105,11 +105,9 @@ def gen_frames():
     camera.release()
     cv2.destroyAllWindows()
 @app.route('/', methods=['GET'])
-@cross_origin()
 def index():
     return render_template('index.html')
 @app.route('/video_feed')
-@cross_origin()
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 port = int(os.getenv("PORT"))
