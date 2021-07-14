@@ -1,3 +1,4 @@
+opencv
 tensorflow-cpu
 starlette
 gunicorn
