@@ -1,4 +1,4 @@
-opencv
+opencv-python-headless
 tensorflow-cpu
 starlette
 gunicorn
