@@ -10,6 +10,7 @@ import cv2
 import pickle
 import random
 import math as m
+import os
 
 app = Flask(__name__)
 
@@ -103,14 +104,19 @@ def gen_frames():
 
     camera.release()
     cv2.destroyAllWindows()
-@app.route('/')
+@app.route('/', methods=['GET'])
+@cross_origin()
 def index():
-    return render_template('templates/index.html')
+    return render_template('index.html')
 @app.route('/video_feed')
+@cross_origin()
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+port = int(os.getenv("PORT"))
 if __name__ == '__main__':
     app.run(debug=True)
+    app.run(host='0.0.0.0', port=port)
+
 # def sign_create():
 
 
