@@ -127,23 +127,22 @@ def main():
     choice = st.sidebar.selectbox("Pick something fun", activities)
 
     if choice == "Home":
-
-    	st.write("Go to the About section from the sidebar to learn more about it.")
+        st.write("Go to the About section from the sidebar to learn more about it.")
         gen_frames()
-        # You can specify more file types below if you want
-#     	image_file = st.file_uploader("Upload image", type=['jpeg', 'png', 'jpg', 'webp'])
+#         You can specify more file types below if you want
+    	# image_file = st.file_uploader("Upload image", type=['jpeg', 'png', 'jpg', 'webp'])
 
-#     	if image_file is not None:
+    	# if image_file is not None:
 
-#     		image = Image.open(image_file)
+    	# 	image = Image.open(image_file)
 
-#     		if st.button("Process"):
+    	# 	if st.button("Process"):
                 
-#                 # result_img is the image with rectangle drawn on it (in case there are faces detected)
-#                 # result_faces is the array with co-ordinates of bounding box(es)
-#     			result_img, result_faces = detect(image=image)
-#     			st.image(result_img, use_column_width = True)
-#     			st.success("Found {} faces\n".format(len(result_faces)))
+        #         # result_img is the image with rectangle drawn on it (in case there are faces detected)
+        #         # result_faces is the array with co-ordinates of bounding box(es)
+    	# 		result_img, result_faces = detect(image=image)
+    	# 		st.image(result_img, use_column_width = True)
+    	# 		st.success("Found {} faces\n".format(len(result_faces)))
 
     elif choice == "About":
     	about()
