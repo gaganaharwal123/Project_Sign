@@ -10,43 +10,42 @@ import cv2
 import pickle
 import random
 import math as m
+from streamlit_webrtc import VideoTransformerBase, webrtc_streamer
 
 app = Flask(__name__)
 
 
-def gen_frames():  
-    '''
-    Function to detect faces/eyes and smiles in the image passed to this function
-    '''
-   #mlp_model = load_model('emnist_mlp_model.h5')
-    cnn_model = load_model('emnist_cnn_model.h5')
+def gen_frames(VideoTransformerBase):  
+    def transform(self, frame):
+        '''
+        Function to detect faces/eyes and smiles in the image passed to this function
+        '''
+    #mlp_model = load_model('emnist_mlp_model.h5')
+        cnn_model = load_model('emnist_cnn_model.h5')
 
-    letters = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j',
-    11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't',
-    21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z', 27: '-'}
+        letters = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j',
+        11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't',
+        21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z', 27: '-'}
 
-    blueLower = np.array([100, 60, 60])
-    blueUpper = np.array([140, 255, 255])
+        blueLower = np.array([100, 60, 60])
+        blueUpper = np.array([140, 255, 255])
 
-    kernel = np.ones((5, 5), np.uint8)
+        kernel = np.ones((5, 5), np.uint8)
 
-    blackboard = np.zeros((480,640,3), dtype=np.uint8)
-    alphabet = np.zeros((200, 200, 3), dtype=np.uint8)
+        blackboard = np.zeros((480,640,3), dtype=np.uint8)
+        alphabet = np.zeros((200, 200, 3), dtype=np.uint8)
 
-    points = deque(maxlen=512)
+        points = deque(maxlen=512)
 
-    prediction1 = 26
-    prediction2 = 26
+        prediction1 = 26
+        prediction2 = 26
 
-    index = 0
-    camera = cv2.VideoCapture(0)
-    if not camera.isOpened():
-        raise IOError("Cannot open webcam")
-    while True:
-        (grabbed, frame) = camera.read()
+        index = 0
+        
+        
         frame = cv2.flip(frame, 1)
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         blueMask = cv2.inRange(hsv, blueLower, blueUpper)
         blueMask = cv2.erode(blueMask, kernel, iterations=2)
@@ -83,8 +82,8 @@ def gen_frames():
                         newImage = np.array(newImage)
                         newImage = newImage.astype('float32')/255
 
-                        # prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
-                        # prediction1 = np.argmax(prediction1)
+                            # prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
+                        prediction1 = np.argmax(prediction1)
 
                         prediction2 = cnn_model.predict(newImage.reshape(1,28,28,1))[0]
                         prediction2 = np.argmax(prediction2)
@@ -101,12 +100,7 @@ def gen_frames():
         cv2.putText(frame, "Convolution Neural Network predected word:  " + str(letters[int(prediction2)+1]), (10, 440), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
         cv2.imshow("alphabets Recognition Real Time", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-
-    camera.release()
-    cv2.destroyAllWindows()
+        return frame
 def about():
 	st.write(
 		'''
@@ -129,7 +123,7 @@ def main():
 
     if choice == "Home":
         st.write("Go to the About section from the sidebar to learn more about it.")
-        gen_frames()
+        webrtc_streamer(key="example", video_transformer_factory=gen_frames)
 #         You can specify more file types below if you want
     	# image_file = st.file_uploader("Upload image", type=['jpeg', 'png', 'jpg', 'webp'])
 
