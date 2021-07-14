@@ -113,16 +113,29 @@ class Camera(BaseCamera):
 
         camera.release()
         cv2.destroyAllWindows()
-@app.route('/', methods=['GET'])
+@app.route('/')
 def index():
+    """Video streaming home page."""
     return render_template('index.html')
+
+
+def gen(camera):
+    """Video streaming generator function."""
+    while True:
+        frame = camera.gen_frames()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-port = int(os.getenv("PORT"))
+    """Video streaming route. Put this in the src attribute of an img tag."""
+    return Response(gen(Camera()),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', threaded=True)
 
 # def sign_create():
 
