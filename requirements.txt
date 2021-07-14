@@ -1,8 +1,5 @@
 tensorflow-gpu
-fastapi
-Pillow
 starlette
 gunicorn
 uvicorn
 numpy
-python-multipart
