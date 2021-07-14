@@ -4,3 +4,4 @@ streamlit
 uvicorn
 numpy
 flask
+streamlit_webrtc
