@@ -18,8 +18,8 @@ def gen_frames():
     '''
     Function to detect faces/eyes and smiles in the image passed to this function
     '''
-    mlp_model = load_model('emnist_mlp_model.h5')
-    # cnn_model = load_model('emnist_cnn_model.h5')
+   #mlp_model = load_model('emnist_mlp_model.h5')
+    cnn_model = load_model('emnist_cnn_model.h5')
 
     letters = { 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j',
     11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't',
@@ -82,11 +82,11 @@ def gen_frames():
                         newImage = np.array(newImage)
                         newImage = newImage.astype('float32')/255
 
-                        prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
-                        prediction1 = np.argmax(prediction1)
+                        # prediction1 = mlp_model.predict(newImage.reshape(1,28,28))[0]
+                        # prediction1 = np.argmax(prediction1)
 
-                        # prediction2 = cnn_model.predict(newImage.reshape(1,28,28,1))[0]
-                        # prediction2 = np.argmax(prediction2)
+                        prediction2 = cnn_model.predict(newImage.reshape(1,28,28,1))[0]
+                        prediction2 = np.argmax(prediction2)
 
                 points = deque(maxlen=512)
                 blackboard = np.zeros((480, 640, 3), dtype=np.uint8)
