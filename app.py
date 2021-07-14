@@ -37,7 +37,7 @@ def gen_frames():
     prediction2 = 26
 
     index = 0
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(some_m3u8_link)
     
     while True:
         (grabbed, frame) = camera.read()
