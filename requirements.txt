@@ -3,3 +3,4 @@ starlette
 gunicorn
 uvicorn
 numpy
+flask
