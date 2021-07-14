@@ -40,7 +40,8 @@ def gen_frames():
 
     index = 0
     camera = cv2.VideoCapture(0)
-    
+    if not camera.isOpened():
+        raise IOError("Cannot open webcam")
     while True:
         (grabbed, frame) = camera.read()
         frame = cv2.flip(frame, 1)
